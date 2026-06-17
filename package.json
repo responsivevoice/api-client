@@ -1,0 +1,96 @@
+{
+  "name": "@responsivevoice/api-client",
+  "version": "2.0.0",
+  "description": "TypeScript REST client for ResponsiveVoice Text-to-Speech API",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist/index.browser.d.mts",
+        "default": "./dist/index.browser.mjs"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "publint": "publint",
+    "attw": "attw --pack .",
+    "api:check": "api-extractor run",
+    "api:update": "api-extractor run --local"
+  },
+  "keywords": [
+    "responsivevoice",
+    "tts",
+    "text-to-speech",
+    "api-client",
+    "typescript",
+    "rest"
+  ],
+  "author": "ResponsiveVoice, Inc. <support@responsivevoice.org>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/responsivevoice/api-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/responsivevoice/api-client/issues"
+  },
+  "homepage": "https://github.com/responsivevoice/api-client#readme",
+  "dependencies": {
+    "@responsivevoice/text": "^2.0.0",
+    "@responsivevoice/types": "^2.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.3",
+    "@microsoft/api-extractor": "^7.58.7",
+    "@types/node": "^25.9.1",
+    "@vitest/coverage-v8": "^4.1.8",
+    "publint": "^0.3.21",
+    "tsdown": "^0.22.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "sideEffects": false,
+  "pnpm": {
+    "overrides": {
+      "defu@<=6.1.4": ">=6.1.5",
+      "yaml@>=2.0.0 <2.8.3": "^2.8.3"
+    }
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": ">=18.12.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "pnpm",
+      "version": "10.33.2",
+      "onFail": "warn"
+    }
+  }
+}

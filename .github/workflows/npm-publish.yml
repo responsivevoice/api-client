@@ -1,0 +1,106 @@
+# Publishes the released package. PUBLISH_TARGET (org-level Actions variable,
+# default 'ghpr') selects the registry: 'ghpr' = GitHub Packages alpha (current);
+# 'npm' = public npmjs via OIDC trusted publishing (auto-provenance). Source-only:
+# dist is built here at publish time, not shipped in the split repo.
+name: Publish to registry
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    # GitHub-hosted runner is MANDATORY for npm provenance / OIDC trusted publishing
+    # (self-hosted unsupported) — this job intentionally does NOT use RUNNER_LABEL.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write # GHPR path
+      id-token: write # npm OIDC trusted-publishing path (inert on the GHPR path)
+    env:
+      PUBLISH_TARGET: ${{ vars.PUBLISH_TARGET || 'ghpr' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          token: ${{ secrets.PACKAGES_TOKEN }}
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js (GitHub Packages)
+        if: env.PUBLISH_TARGET == 'ghpr'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://npm.pkg.github.com'
+          cache: 'pnpm'
+
+      - name: Setup Node.js (npm)
+        if: env.PUBLISH_TARGET == 'npm'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies (build toolchain + siblings)
+        # Mirrors ci.yml's proven recipe; retry loop absorbs registry propagation lag
+        # on fresh @responsivevoice/* fetches. Token authenticates GHPR fetches only;
+        # empty on the npm path (siblings resolve from public npm, no auth needed).
+        run: |
+          for attempt in $(seq 1 90); do
+            pnpm install --frozen-lockfile --fix-lockfile && break
+            echo "::warning::Attempt $attempt failed, retrying in 10s..."
+            sleep 10
+          done
+          if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
+            echo "::error::pnpm install failed after 90 attempts (15 min)."
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ (vars.PUBLISH_TARGET || 'ghpr') == 'ghpr' && secrets.PACKAGES_TOKEN || '' }}
+
+      - name: Build (source-only — produce dist at publish time)
+        run: pnpm build
+
+      - name: Publish to GitHub Packages
+        if: env.PUBLISH_TARGET == 'ghpr'
+        run: npm publish --tag alpha
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+
+      - name: Ensure npm >= 11.5.1 (trusted publishing requirement)
+        if: env.PUBLISH_TARGET == 'npm'
+        run: npm install -g npm@latest
+
+      - name: Determine npm publish mode (one-time bootstrap token vs OIDC)
+        if: env.PUBLISH_TARGET == 'npm'
+        id: npmmode
+        # Secrets can't be read in `if:`, so map the token's presence to an output.
+        # NPM_BOOTSTRAP_TOKEN is set ONLY for a package's first-ever publish (npm
+        # can't pre-configure a trusted publisher for a non-existent package);
+        # remove the org secret after configuring the trusted publisher → OIDC.
+        run: |
+          if [ -n "${NPM_BOOTSTRAP_TOKEN}" ]; then
+            echo "bootstrap=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bootstrap=false" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          NPM_BOOTSTRAP_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+
+      - name: Publish to npm — bootstrap (token + provenance, first publish only)
+        if: env.PUBLISH_TARGET == 'npm' && steps.npmmode.outputs.bootstrap == 'true'
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}
+
+      - name: Publish to npm — OIDC trusted publishing (steady state, auto-provenance)
+        if: env.PUBLISH_TARGET == 'npm' && steps.npmmode.outputs.bootstrap != 'true'
+        # OIDC mints per-run credentials — no NODE_AUTH_TOKEN, no --provenance flag.
+        run: npm publish --access public

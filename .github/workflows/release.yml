@@ -1,0 +1,52 @@
+name: Create GitHub Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  release:
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && vars.ENABLE_NPM_PUBLISH == 'true'
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check if version changed
+        id: version
+        run: |
+          VERSION=$(jq -r '.version' package.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if git tag -l "v$VERSION" | grep -q "v$VERSION"; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract release notes from CHANGELOG
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -n "/^## ${VERSION}$/,/^## /{/^## ${VERSION}$/d;/^## /d;p;}" CHANGELOG.md > "$RUNNER_TEMP/release-notes.md"
+          if [ ! -s "$RUNNER_TEMP/release-notes.md" ]; then
+            echo "Bug fixes and improvements." > "$RUNNER_TEMP/release-notes.md"
+          fi
+
+      - name: Create GitHub Release
+        if: steps.version.outputs.changed == 'true'
+        run: |
+          gh release create "v${{ steps.version.outputs.version }}" \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes-file "$RUNNER_TEMP/release-notes.md"
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN }}

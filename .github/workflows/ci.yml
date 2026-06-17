@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    env:
+      # Cap vitest worker concurrency to avoid OOM on memory-constrained runners.
+      VITEST_MAX_WORKERS: ${{ vars.VITEST_MAX_WORKERS || '4' }}
+      # Selects where @responsivevoice/* siblings install from (matches the publish target).
+      PUBLISH_TARGET: ${{ vars.PUBLISH_TARGET || 'ghpr' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10.33.2
+
+      - name: Setup Node.js (GitHub Packages)
+        if: env.PUBLISH_TARGET == 'ghpr'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://npm.pkg.github.com'
+          cache: 'pnpm'
+
+      - name: Setup Node.js (npm)
+        if: env.PUBLISH_TARGET == 'npm'
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        # Retry loop absorbs registry propagation lag on fresh @responsivevoice/* fetches via --fix-lockfile.
+        run: |
+          for attempt in $(seq 1 90); do
+            pnpm install --frozen-lockfile --fix-lockfile && break
+            echo "::warning::Attempt $attempt failed, retrying in 10s..."
+            sleep 10
+          done
+          if [ ! -d node_modules ] || [ -z "$(ls -A node_modules 2>/dev/null)" ]; then
+            echo "::error::pnpm install failed after 90 attempts (15 min). See warnings above."
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ (vars.PUBLISH_TARGET || 'ghpr') == 'ghpr' && secrets.PACKAGES_TOKEN || '' }}
+
+      - name: Build
+        run: pnpm build
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test:coverage
+
+      - name: Validate package exports
+        run: pnpm publint && pnpm attw
+
+  validate:
+    if: always()
+    needs: [build-and-test]
+    runs-on: ${{ vars.RUNNER_LABEL || 'ubuntu-latest' }}
+    timeout-minutes: 1
+    steps:
+      - name: Check required jobs
+        run: |
+          if [[ "${{ needs.build-and-test.result }}" != "success" ]]; then
+            echo "build-and-test failed"
+            exit 1
+          fi
+          echo "All checks passed"
