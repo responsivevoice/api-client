@@ -1,7 +1,7 @@
 {
   "name": "@responsivevoice/api-client",
   "version": "2.0.0",
-  "description": "TypeScript REST client for ResponsiveVoice Text-to-Speech API",
+  "description": "TypeScript REST client for the ResponsiveVoice text-to-speech (TTS) API — speech synthesis & voice generation",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -40,11 +40,13 @@
   },
   "keywords": [
     "responsivevoice",
-    "tts",
     "text-to-speech",
+    "speech-synthesis",
+    "tts",
+    "voice",
     "api-client",
-    "typescript",
-    "rest"
+    "rest-api",
+    "typescript"
   ],
   "author": "ResponsiveVoice, Inc. <support@responsivevoice.org>",
   "license": "MIT",
