@@ -1,6 +1,6 @@
 {
   "name": "@responsivevoice/api-client",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "TypeScript REST client for the ResponsiveVoice text-to-speech (TTS) API — speech synthesis & voice generation",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -63,7 +63,7 @@
   "homepage": "https://github.com/responsivevoice/api-client#readme",
   "dependencies": {
     "@responsivevoice/text": "^2.0.0",
-    "@responsivevoice/types": "^2.0.0",
+    "@responsivevoice/types": "^2.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
