@@ -46,6 +46,9 @@
     "voice",
     "api-client",
     "rest-api",
+    "websocket",
+    "streaming",
+    "node",
     "typescript"
   ],
   "author": "ResponsiveVoice, Inc. <support@responsivevoice.org>",
