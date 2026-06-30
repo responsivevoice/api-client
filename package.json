@@ -83,7 +83,8 @@
   "pnpm": {
     "overrides": {
       "defu@<=6.1.4": ">=6.1.5",
-      "yaml@>=2.0.0 <2.8.3": "^2.8.3"
+      "yaml@>=2.0.0 <2.8.3": "^2.8.3",
+      "@mdn/browser-compat-data": "^8.0.4"
     }
   },
   "devEngines": {
@@ -97,5 +98,26 @@
       "version": "10.33.2",
       "onFail": "warn"
     }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "modern": [
+      "last 2 Chrome versions",
+      "last 2 Firefox versions",
+      "last 2 Safari versions",
+      "last 2 Edge versions"
+    ],
+    "legacy": [
+      "iOS >= 12",
+      "Android >= 5",
+      "Chrome >= 66",
+      "Firefox >= 57",
+      "Safari >= 12",
+      "Edge >= 16"
+    ]
   }
 }

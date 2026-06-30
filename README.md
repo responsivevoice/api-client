@@ -17,10 +17,12 @@
   <a href="https://www.npmjs.com/package/@responsivevoice/api-client"><img src="https://img.shields.io/npm/dm/@responsivevoice/api-client.svg" alt="npm downloads"></a>
   <a href="https://github.com/responsivevoice/api-client"><img src="https://img.shields.io/badge/GitHub-api--client-181717?logo=github&logoColor=white" alt="GitHub"></a>
   <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT">
+  <!-- compat-badges:start -->
   <img src="https://img.shields.io/badge/Chrome-66+-4285F4?logo=googlechrome&logoColor=white" alt="Chrome 66+">
-  <img src="https://img.shields.io/badge/Firefox-57+-FF7139?logo=firefox&logoColor=white" alt="Firefox 57+">
+  <img src="https://img.shields.io/badge/Firefox-65+-FF7139?logo=firefox&logoColor=white" alt="Firefox 65+">
   <img src="https://img.shields.io/badge/Safari-12+-006CFF?logo=safari&logoColor=white" alt="Safari 12+">
-  <img src="https://img.shields.io/badge/Edge-17+-0078D7?logo=microsoftedge&logoColor=white" alt="Edge 17+">
+  <img src="https://img.shields.io/badge/Edge-79+-0078D7?logo=microsoftedge&logoColor=white" alt="Edge 79+">
+<!-- compat-badges:end -->
 </p>
 
 <p align="center">
@@ -278,12 +280,18 @@ const audio = await client.synthesize(
 
 This package supports all modern browsers. For detailed compatibility information, see the [Browser Support documentation](https://docs.responsivevoice.org/guides/browser-support/).
 
-**Minimum browser versions:**
+Minimum browser versions (raw, unpolyfilled — add polyfills or use the browser bundle for older browsers):
+
+<!-- compat-minimums:start -->
 
 - Chrome 66+
-- Firefox 57+
+- Firefox 65+
 - Safari 12+
-- Edge 17+
+- Edge 79+
+- iOS Safari 12+
+- Chrome Android 66+
+
+<!-- compat-minimums:end -->
 
 ## Node.js Support
 
